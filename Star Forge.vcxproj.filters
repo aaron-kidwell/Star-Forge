@@ -21,12 +21,42 @@
     <ClCompile Include="recon.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="injection.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="evasion.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="persist.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="c2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="privesc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="recon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="injection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="evasion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="persist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="c2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="privesc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

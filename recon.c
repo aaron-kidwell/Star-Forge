@@ -33,7 +33,7 @@ VOID collect_processes()
 	WTSEnum(WTS_CURRENT_SERVER_HANDLE, 0, 1, &procinfo, &proccount);
 	DWORD i;
 	for (i = 0; i < proccount; i++) {
-		wprintf(L"%d - %ls\n", (procinfo + i)->ProcessId, (procinfo + i)->pProcessName);
+		wprintf(L"%d -> %ls\n", (procinfo + i)->ProcessId, (procinfo + i)->pProcessName);
 	}
 	WTSFreeMem(procinfo);
 	FreeLibrary(wts);
