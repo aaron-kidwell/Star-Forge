@@ -3,6 +3,8 @@
 #include "config.h"
 #include <libloaderapi.h>
 #include <wtsapi32.h>
+#include <lmaccess.h>
+#include <lmapibuf.h>
 
 VOID collect_processes()
 {
@@ -35,6 +37,54 @@ VOID collect_processes()
 	}
 	WTSFreeMem(procinfo);
 	FreeLibrary(wts);
+	printf("[x] Memory freed\n");
+	printf("[x] Handles closed\n");
+}
+
+VOID collect_usergrps() {
+	HMODULE hNet = LoadLibraryW(L"netapi32.dll");
+	if (hNet == NULL) {
+		printf("netapi32.dll could not be loaded. Error code: %d\n", GetLastError());
+		return;
+	}
+	else {
+		printf("[x] netapi32.dll loaded\n");
+	}
+	typedef NET_API_STATUS (WINAPI* NetApiBufferFree)(
+		_Frees_ptr_opt_ LPVOID Buffer
+	);
+	typedef NET_API_STATUS (WINAPI* NetUserEnum)(
+		LPCWSTR servername,
+		DWORD   level,
+		DWORD   filter,
+		LPBYTE * bufptr,
+		DWORD   prefmaxlen,
+		LPDWORD entriesread,
+		LPDWORD totalentries,
+		PDWORD  resume_handle
+	);
+	NetApiBufferFree netbufferfree = (NetApiBufferFree)GetProcAddress(hNet, "NetApiBufferFree");
+	NetUserEnum userenum = (NetUserEnum)GetProcAddress(hNet, "NetUserEnum");
+	LPBYTE userinfo = NULL;
+	DWORD userenumcount = 0;
+	DWORD userenumtotal = 0;
+	userenum(
+		NULL, 
+		3, 
+		0, 
+		&userinfo,
+		MAX_PREFERRED_LENGTH,
+		&userenumcount,
+		&userenumtotal,
+		NULL);
+	USER_INFO_3* users = (USER_INFO_3*)userinfo;
+	int i;
+	for (i = 0; i < userenumcount; i++) {
+		wprintf(L"%ls\n", (users + i)->usri3_name);
+	}
+	
+	netbufferfree(userinfo);
+	FreeLibrary(hNet);
 	printf("[x] Memory freed\n");
 	printf("[x] Handles closed\n");
 }
