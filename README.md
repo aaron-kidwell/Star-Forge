@@ -1,5 +1,13 @@
 # Star Forge
 
+huge work in progress
+
+
+
+
+
+
+
 This software is provided for educational and authorized 
 security research purposes only. Use of this tool against 
 systems without explicit written permission from the system 
