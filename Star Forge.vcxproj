@@ -77,6 +77,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,6 +96,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,6 +113,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,6 +132,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,22 +143,22 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="c2.c" />
-    <ClCompile Include="evasion.c" />
-    <ClCompile Include="injection.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="persist.c" />
-    <ClCompile Include="privesc.c" />
-    <ClCompile Include="recon.c" />
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\modules\c2.c" />
+    <ClCompile Include="src\modules\evasion.c" />
+    <ClCompile Include="src\modules\injection.c" />
+    <ClCompile Include="src\modules\persist.c" />
+    <ClCompile Include="src\modules\privesc.c" />
+    <ClCompile Include="src\modules\recon.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="c2.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="evasion.h" />
-    <ClInclude Include="injection.h" />
-    <ClInclude Include="persist.h" />
-    <ClInclude Include="privesc.h" />
-    <ClInclude Include="recon.h" />
+    <ClInclude Include="src\include\config.h" />
+    <ClInclude Include="src\modules\c2.h" />
+    <ClInclude Include="src\modules\evasion.h" />
+    <ClInclude Include="src\modules\injection.h" />
+    <ClInclude Include="src\modules\persist.h" />
+    <ClInclude Include="src\modules\privesc.h" />
+    <ClInclude Include="src\modules\recon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

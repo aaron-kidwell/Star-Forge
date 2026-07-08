@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -9,55 +9,64 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\include">
+      <UniqueIdentifier>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\modules">
+      <UniqueIdentifier>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\modules">
+      <UniqueIdentifier>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c">
+    <ClCompile Include="src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="recon.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\recon.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="injection.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\injection.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="evasion.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\evasion.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="persist.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\persist.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="c2.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\c2.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="privesc.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\modules\privesc.c">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\include\config.h">
+      <Filter>Header Files\include</Filter>
     </ClInclude>
-    <ClInclude Include="recon.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\recon.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="injection.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\injection.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="evasion.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\evasion.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="persist.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\persist.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="c2.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\c2.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="privesc.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\modules\privesc.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
