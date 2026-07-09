@@ -42,7 +42,7 @@ VOID collect_processes()
 	printf("[x] Handles closed\n");
 }
 
-VOID collect_usergrps() {
+VOID collect_users_groups_shares() {
 	HMODULE hNet = LoadLibraryW(L"netapi32.dll");
 	if (hNet == NULL) {
 		printf("netapi32.dll could not be loaded. Error code: %d\n", GetLastError());

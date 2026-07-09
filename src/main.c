@@ -13,11 +13,12 @@ int main(VOID)
 	collect_processes();
 
 	printf("\n===========USERS===========\n");
-	collect_usergrps();
+	collect_users_groups_shares();
+	// add NetShareEnum for shares
 
 	printf("\n===========NETWORK===========\n");
 	collect_interfaces();
-	// add NetShareEnum for shares and GetIpNetTable for the ARP cache 
+	 // add GetIpNetTable for the ARP cache 
 
 
 	return 0;
