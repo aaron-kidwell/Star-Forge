@@ -5,6 +5,7 @@
 #include <wtsapi32.h>
 #include <lmaccess.h>
 #include <lmapibuf.h>
+#include <iphlpapi.h>
 
 VOID collect_processes()
 {
@@ -146,4 +147,68 @@ VOID collect_usergrps() {
 	FreeLibrary(hNet);
 	printf("[x] Memory freed\n");
 	printf("[x] Handles closed\n");
+}
+
+VOID collect_interfaces() {
+	HMODULE ifdll = LoadLibraryW(L"Iphlpapi.dll");
+	if (ifdll == NULL) {
+		printf("Iphlpapi.dll could not be loaded. Error code: %d\n", GetLastError());
+		return;
+	}
+	else {
+		printf("[x] Iphlpapi.dll loaded\n");
+	}
+	typedef ULONG (WINAPI * GetAdaptersInfo)(
+		PIP_ADAPTER_INFO AdapterInfo,
+		PULONG           SizePointer
+	);
+	GetAdaptersInfo adapterinfload = (GetAdaptersInfo)GetProcAddress(ifdll, "GetAdaptersInfo");
+	PIP_ADAPTER_INFO adaptinf = NULL;
+	ULONG adaptinfosize = 0;
+	adapterinfload(NULL, &adaptinfosize);  // first call to get size
+	adaptinf = (PIP_ADAPTER_INFO)malloc(adaptinfosize);
+	adapterinfload(adaptinf, &adaptinfosize);
+
+
+	// looping thru a linked list here
+	PIP_ADAPTER_INFO current = adaptinf;
+	while (current != NULL) {
+		printf("\n");
+		printf("IP Address: %s\n", current->IpAddressList.IpAddress.String);
+		printf("Description: %s\n", current->Description);
+
+		// mac address
+		printf("MAC Address: ");
+		for (int i = 0; i < current->AddressLength; i++) {
+			printf("%02X", current->Address[i]);
+			if (i < current->AddressLength - 1) printf("-");
+		}
+		printf("\n");
+
+		printf("Adapter: %s\n", current->AdapterName);
+
+		// get dhcp
+		if (current->DhcpEnabled == 1) {
+			printf("DHCP: Yes\n");
+			printf("DHCP Server: %s\n", current->DhcpServer.IpAddress.String);
+		}
+		else {
+			printf("DHCP: No\n");
+		}
+		
+
+
+
+		current = current->Next;
+	}
+	
+	FreeLibrary(ifdll);
+	free(adaptinf);
+	printf("[x] Memory freed\n");
+	printf("[x] Handles closed\n");
+
+	
+
+
+
 }
