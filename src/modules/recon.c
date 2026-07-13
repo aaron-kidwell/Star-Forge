@@ -1,15 +1,11 @@
 #include <stdio.h>
 #include <windows.h>
 #include "config.h"
-#include <libloaderapi.h>
 #include <wtsapi32.h>
 #include <lmaccess.h>
 #include <lmapibuf.h>
 #include <iphlpapi.h>
 #include <lmshare.h>
-#include <processthreadsapi.h>
-#include <securitybaseapi.h>
-
 
 VOID collect_processes()
 {
@@ -309,11 +305,18 @@ VOID collect_integrity() {
 	typedef PUCHAR (WINAPI* GetSidSubAuthorityCount)(
 		PSID pSid
 	);
+	typedef BOOL (WINAPI* LookupPrivilegeNameW)(
+		LPCWSTR lpSystemName,
+		PLUID   lpLuid,
+		LPWSTR  lpName,
+		LPDWORD cchName
+	);
 
 	OpenProcessToken openproctoken = (OpenProcessToken)GetProcAddress(tokendll, "OpenProcessToken");
 	GetTokenInformation gettokeninfo = (GetTokenInformation)GetProcAddress(tokendll, "GetTokenInformation");
 	GetSidSubAuthority getsidsubauth = (GetSidSubAuthority)GetProcAddress(tokendll, "GetSidSubAuthority");
 	GetSidSubAuthorityCount getsidsubauthcount = (GetSidSubAuthorityCount)GetProcAddress(tokendll, "GetSidSubAuthorityCount");
+	LookupPrivilegeNameW getprivname = (LookupPrivilegeNameW)GetProcAddress(tokendll, "LookupPrivilegeNameW");
 
 
 	HANDLE token;
@@ -346,6 +349,31 @@ VOID collect_integrity() {
 	else
 		printf("Integrity: SYSTEM\n");
 	
+	// reusing this
+	free(tokeninforeturn);
+	tokeninfolength = 0;
+	tokeninforeturn = NULL;
+	// get the size first
+	gettokeninfo(token, TokenPrivileges, NULL, 0, &tokeninfolength);
+	//allocate the buffer to the size of the return
+	tokeninforeturn = malloc(tokeninfolength);
+	// fill the buffer with the requested info
+	gettokeninfo(token, TokenPrivileges, tokeninforeturn, tokeninfolength, &tokeninfolength);
+
+	// cast that info to a struct
+	TOKEN_PRIVILEGES* tp = (TOKEN_PRIVILEGES*)tokeninforeturn;
+
+	DWORD i = 0;
+	printf("\nPermissions: \n");
+	for (i = 0; i < tp->PrivilegeCount; i++) {
+		WCHAR privName[256] = { 0 };
+		DWORD privsize = 256;
+		getprivname(NULL, &tp->Privileges[i].Luid, privName, &privsize);
+		wprintf(L"%ls - %ls\n", privName, 
+			(tp->Privileges[i].Attributes & SE_PRIVILEGE_ENABLED) ? L"Enabled" : L"Disabled");
+	}
+	
+	CloseHandle(token);
 	FreeLibrary(tokendll);
 	free(tokeninforeturn);
 	printf("\n[x] Memory freed\n");
