@@ -7,6 +7,8 @@
 #include <lmapibuf.h>
 #include <iphlpapi.h>
 #include <lmshare.h>
+#include <processthreadsapi.h>
+#include <securitybaseapi.h>
 
 
 VOID collect_processes()
@@ -276,5 +278,77 @@ VOID collect_interfaces() {
 	
 
 
+
+}
+
+VOID collect_integrity() {
+	HMODULE tokendll = LoadLibraryW(L"Advapi32.dll");
+	if (tokendll == NULL) {
+		printf("[-] Advapi32.dll could not be loaded. Error code: %d\n", GetLastError());
+		return;
+	}
+	else {
+		printf("[x] Advapi32.dll loaded\n");
+	}
+	typedef BOOL (WINAPI* OpenProcessToken)(
+		HANDLE  ProcessHandle,
+		DWORD   DesiredAccess,
+		PHANDLE TokenHandle
+	);
+	typedef BOOL (WINAPI* GetTokenInformation)(
+		HANDLE                  TokenHandle,
+		TOKEN_INFORMATION_CLASS TokenInformationClass,
+		LPVOID                  TokenInformation,
+		DWORD                   TokenInformationLength,
+		PDWORD                  ReturnLength
+	);
+	typedef PDWORD (WINAPI* GetSidSubAuthority)(
+		PSID  pSid,
+		DWORD nSubAuthority
+	);
+	typedef PUCHAR (WINAPI* GetSidSubAuthorityCount)(
+		PSID pSid
+	);
+
+	OpenProcessToken openproctoken = (OpenProcessToken)GetProcAddress(tokendll, "OpenProcessToken");
+	GetTokenInformation gettokeninfo = (GetTokenInformation)GetProcAddress(tokendll, "GetTokenInformation");
+	GetSidSubAuthority getsidsubauth = (GetSidSubAuthority)GetProcAddress(tokendll, "GetSidSubAuthority");
+	GetSidSubAuthorityCount getsidsubauthcount = (GetSidSubAuthorityCount)GetProcAddress(tokendll, "GetSidSubAuthorityCount");
+
+
+	HANDLE token;
+	if (openproctoken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token) != 0) {
+		printf("[x] Opened handle to token!\n");
+	}
+	else {
+		printf("[-] Could not open handle to token. Error code: %d\n", GetLastError());
+	}
+	
+	DWORD tokeninfolength = 0;
+	// get the size first
+	gettokeninfo(token, TokenIntegrityLevel, NULL, 0, &tokeninfolength);
+	//allocate the buffer to the size of the return
+	LPVOID tokeninforeturn = malloc(tokeninfolength);
+	// fill the buffer with the requested info
+	gettokeninfo(token, TokenIntegrityLevel, tokeninforeturn, tokeninfolength, &tokeninfolength);
+	// cast that info to a struct
+	TOKEN_MANDATORY_LABEL* tml = (TOKEN_MANDATORY_LABEL*)tokeninforeturn;
+
+	DWORD count = *getsidsubauthcount(tml->Label.Sid);
+	DWORD integrityLevel = *getsidsubauth(tml->Label.Sid, count - 1);
+
+	if (integrityLevel < SECURITY_MANDATORY_MEDIUM_RID)
+		printf("Integrity: Low\n");
+	else if (integrityLevel < SECURITY_MANDATORY_HIGH_RID)
+		printf("Integrity: Medium\n");
+	else if (integrityLevel < SECURITY_MANDATORY_SYSTEM_RID)
+		printf("Integrity: High\n");
+	else
+		printf("Integrity: SYSTEM\n");
+	
+	FreeLibrary(tokendll);
+	free(tokeninforeturn);
+	printf("\n[x] Memory freed\n");
+	printf("[x] Handles closed\n");
 
 }

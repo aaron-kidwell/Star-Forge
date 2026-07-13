@@ -17,7 +17,10 @@ int main(VOID)
 
 	printf("\n===========NETWORK===========\n");
 	collect_interfaces();
-	 // add GetIpNetTable for the ARP cache 
+
+	printf("\n===========INTEGRITY===========\n");
+	collect_integrity();
+	 //still need TokenPrivileges
 
 
 	return 0;
