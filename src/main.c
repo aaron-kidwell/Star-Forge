@@ -14,7 +14,6 @@ int main(VOID)
 
 	printf("\n===========USERS===========\n");
 	collect_users_groups_shares();
-	// add NetShareEnum for shares
 
 	printf("\n===========NETWORK===========\n");
 	collect_interfaces();

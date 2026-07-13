@@ -6,6 +6,8 @@
 #include <lmaccess.h>
 #include <lmapibuf.h>
 #include <iphlpapi.h>
+#include <lmshare.h>
+
 
 VOID collect_processes()
 {
@@ -83,11 +85,21 @@ VOID collect_users_groups_shares() {
 		LPDWORD    totalentries,
 		PDWORD_PTR resumehandle
 	);
+	typedef NET_API_STATUS (WINAPI* NetShareEnum)(
+		LMSTR   servername,
+		DWORD   level,
+		LPBYTE* bufptr,
+		DWORD   prefmaxlen,
+		LPDWORD entriesread,
+		LPDWORD totalentries,
+		LPDWORD resume_handle
+	);
 
 	NetLocalGroupEnum grpenum = (NetLocalGroupEnum)GetProcAddress(hNet, "NetLocalGroupEnum");
 	NetLocalGroupGetMembers usergrpenum = (NetLocalGroupGetMembers)GetProcAddress(hNet, "NetLocalGroupGetMembers");
 	NetApiBufferFree netbufferfree = (NetApiBufferFree)GetProcAddress(hNet, "NetApiBufferFree");
 	NetUserEnum userenum = (NetUserEnum)GetProcAddress(hNet, "NetUserEnum");
+	NetShareEnum shareenum = (NetShareEnum)GetProcAddress(hNet, "NetShareEnum");
 	
 	// list users
 	LPBYTE userinfo = NULL;
@@ -140,6 +152,27 @@ VOID collect_users_groups_shares() {
 			usergrpinfo = NULL;
 		}
 	}
+
+	// get local shares
+	printf("\n===========SHARES===========\n");
+	LPBYTE shareinfo = NULL;
+	DWORD sharesread = 0;
+	DWORD shareinfototal = 0;
+	shareenum(NULL, 2, &shareinfo, MAX_PREFERRED_LENGTH, &sharesread, &shareinfototal, NULL);
+	SHARE_INFO_2* shares = (SHARE_INFO_2*)shareinfo;
+	i = 0;
+	while (i < sharesread) {
+		wprintf(L"%ls - %ls - %ls - Current Connections: %lu\n", 
+			shares[i].shi2_netname, 
+			shares[i].shi2_path, 
+			shares[i].shi2_remark, 
+			shares[i].shi2_current_uses);
+		i++;
+	}
+	 
+
+
+
 	
 	netbufferfree(userinfo);
 	netbufferfree(grpinfo);
@@ -162,7 +195,16 @@ VOID collect_interfaces() {
 		PIP_ADAPTER_INFO AdapterInfo,
 		PULONG           SizePointer
 	);
+	typedef ULONG (WINAPI* GetIpNetTable)(
+		PMIB_IPNETTABLE IpNetTable,
+		PULONG          SizePointer,
+		BOOL            Order
+	);
+
+
 	GetAdaptersInfo adapterinfload = (GetAdaptersInfo)GetProcAddress(ifdll, "GetAdaptersInfo");
+	GetIpNetTable ipnettable = (GetIpNetTable)GetProcAddress(ifdll, "GetIpNetTable");
+
 	PIP_ADAPTER_INFO adaptinf = NULL;
 	ULONG adaptinfosize = 0;
 	adapterinfload(NULL, &adaptinfosize);  // first call to get size
@@ -195,16 +237,40 @@ VOID collect_interfaces() {
 		else {
 			printf("DHCP: No\n");
 		}
-		
-
-
 
 		current = current->Next;
 	}
 	
+	// get arp cache
+	PMIB_IPNETTABLE arpTable = NULL;
+	ULONG arpsize = 0;
+	//call to get size
+	ipnettable(NULL, &arpsize, TRUE);
+	// allocate memory size returned from size
+	arpTable = (PMIB_IPNETTABLE)malloc(arpsize);
+	// call again to fill
+	ipnettable(arpTable, &arpsize, TRUE);
+
+
+	printf("\nARP Entries: %d\n", arpTable->dwNumEntries);
+	for (DWORD i = 0; i < arpTable->dwNumEntries; i++) {
+		BYTE* ip = (BYTE*)&arpTable->table[i].dwAddr;
+		printf("%d.%d.%d.%d - ", ip[0], ip[1], ip[2], ip[3]);
+		if (arpTable->table[i].dwType == (DWORD)4) {
+			printf("Static - ");
+		}
+
+		for (DWORD j = 0; j < arpTable->table[i].dwPhysAddrLen; j++) {
+			printf("%02X", arpTable->table[i].bPhysAddr[j]);
+			if (j < arpTable->table[i].dwPhysAddrLen - 1) printf("-");
+		}
+		printf("\n");
+	}
+
 	FreeLibrary(ifdll);
 	free(adaptinf);
-	printf("[x] Memory freed\n");
+	free(arpTable);
+	printf("\n[x] Memory freed\n");
 	printf("[x] Handles closed\n");
 
 	

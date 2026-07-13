@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Star Forge.vcxproj" />
+  <Project Path="Star Forge.vcxproj" Id="72dcddbd-97a9-49da-8316-f3f9d2bb4b20" />
 </Solution>
