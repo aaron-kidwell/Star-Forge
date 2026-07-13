@@ -20,7 +20,7 @@ int main(VOID)
 
 	printf("\n===========INTEGRITY===========\n");
 	collect_integrity();
-	 //still need TokenPrivileges
+	
 
 
 	return 0;
