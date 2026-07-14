@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <winsock2.h>
 #include <windows.h>
 #include "config.h"
 #include <wtsapi32.h>
@@ -6,6 +7,9 @@
 #include <lmapibuf.h>
 #include <iphlpapi.h>
 #include <lmshare.h>
+#pragma comment(lib, "ws2_32.lib")
+VOID collect_installed_apps(HMODULE hAdvapi);
+
 
 VOID collect_processes()
 {
@@ -198,10 +202,16 @@ VOID collect_interfaces() {
 		PULONG          SizePointer,
 		BOOL            Order
 	);
+	typedef  ULONG (WINAPI* GetTcpTable2)(
+		PMIB_TCPTABLE2 TcpTable,
+		PULONG         SizePointer,
+		BOOL           Order
+	);
 
 
 	GetAdaptersInfo adapterinfload = (GetAdaptersInfo)GetProcAddress(ifdll, "GetAdaptersInfo");
 	GetIpNetTable ipnettable = (GetIpNetTable)GetProcAddress(ifdll, "GetIpNetTable");
+	GetTcpTable2 gettcptable = (GetTcpTable2)GetProcAddress(ifdll, "GetTcpTable2");
 
 	PIP_ADAPTER_INFO adaptinf = NULL;
 	ULONG adaptinfosize = 0;
@@ -265,16 +275,70 @@ VOID collect_interfaces() {
 		printf("\n");
 	}
 
+	PMIB_TCPTABLE2 tcptable = NULL;
+	ULONG tcpreturn;
+	gettcptable(NULL, &tcpreturn, TRUE);
+	tcptable = (PMIB_TCPTABLE2)malloc(tcpreturn);
+	gettcptable(tcptable, &tcpreturn, TRUE);
+
+	printf("\nTCP Entries: %d\n", tcptable->dwNumEntries);
+	for (DWORD i = 0; i < tcptable->dwNumEntries; i++) {
+		BYTE* srcip = (BYTE*)&tcptable->table[i].dwLocalAddr;
+		BYTE* dstip = (BYTE*)&tcptable->table[i].dwRemoteAddr;
+		printf("%d.%d.%d.%d", srcip[0], srcip[1], srcip[2], srcip[3]);
+		printf(":%d - ", ntohs((u_short)tcptable->table[i].dwLocalPort));
+		printf("%d.%d.%d.%d", dstip[0], dstip[1], dstip[2], dstip[3]);
+		printf(":%d - ", ntohs((u_short)tcptable->table[i].dwRemotePort));
+		switch (tcptable->table[i].dwState) {
+		case 1:
+			printf("CLOSED");
+			break;
+		case 2:
+			printf("LISTEN");
+			break;
+		case 3:
+			printf("SYN-SENT");
+			break;
+		case 4:
+			printf("SYN-RECEIVED");
+			break;
+		case 5:
+			printf("ESTABLISHED");
+			break;
+		case 6:
+			printf("FIN-WAIT");
+			break;
+		case 7:
+			printf("FIN-WAIT");
+			break;
+		case 8:
+			printf("CLOSE-WAIT");
+			break;
+		case 9:
+			printf("CLOSING");
+			break;
+		case 10:
+			printf("LAST-ACK");
+			break;
+		case 11:
+			printf("TIME-WAIT");
+			break;
+		case 12:
+			printf("TCB");
+			break;
+		default:
+			printf("NA");
+			break;
+		}
+		printf(" - PID: %d\n", tcptable->table[i].dwOwningPid);
+	}
+
 	FreeLibrary(ifdll);
 	free(adaptinf);
 	free(arpTable);
+	free(tcptable);
 	printf("\n[x] Memory freed\n");
 	printf("[x] Handles closed\n");
-
-	
-
-
-
 }
 
 VOID collect_integrity() {
@@ -373,10 +437,151 @@ VOID collect_integrity() {
 			(tp->Privileges[i].Attributes & SE_PRIVILEGE_ENABLED) ? L"Enabled" : L"Disabled");
 	}
 	
+	collect_installed_apps(tokendll);
 	CloseHandle(token);
 	FreeLibrary(tokendll);
 	free(tokeninforeturn);
 	printf("\n[x] Memory freed\n");
 	printf("[x] Handles closed\n");
 
+}
+
+VOID collect_installed_apps(HMODULE hAdvapi) {
+
+	typedef LSTATUS(WINAPI* pRegOpenKeyExW)(
+		HKEY    hKey,
+		LPCWSTR lpSubKey,
+		DWORD   ulOptions,
+		REGSAM  samDesired,
+		PHKEY   phkResult
+		);
+	typedef LSTATUS(WINAPI* pRegEnumKeyExW)(
+		HKEY      hKey,
+		DWORD     dwIndex,
+		LPWSTR    lpName,
+		LPDWORD   lpcchName,
+		LPDWORD   lpReserved,
+		LPWSTR    lpClass,
+		LPDWORD   lpcchClass,
+		PFILETIME lpftLastWriteTime
+		);
+	typedef LSTATUS(WINAPI* pRegQueryValueExW)(
+		HKEY    hKey,
+		LPCWSTR lpValueName,
+		LPDWORD lpReserved,
+		LPDWORD lpType,
+		LPBYTE  lpData,
+		LPDWORD lpcbData
+		);
+
+	pRegOpenKeyExW regopen = (pRegOpenKeyExW)GetProcAddress(hAdvapi, "RegOpenKeyExW");
+	pRegEnumKeyExW regenum = (pRegEnumKeyExW)GetProcAddress(hAdvapi, "RegEnumKeyExW");
+	pRegQueryValueExW regquery = (pRegQueryValueExW)GetProcAddress(hAdvapi, "RegQueryValueExW");
+
+
+	printf("\n===========APPLICATIONS===========\n");
+	HKEY key;
+	if (regopen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ, &key) == ERROR_SUCCESS) {
+		printf("[x] Reg Key Opened\n");
+	}
+	else {
+		printf("[-] Error Opening Reg Key\n");
+	}
+	DWORD index = 0;
+	WCHAR subkeyName[256];
+	DWORD subkeyNameSize = 256;
+	while (regenum(key, index, subkeyName, &subkeyNameSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+
+		// open the app's subkey
+		HKEY appkey;
+		regopen(key, subkeyName, 0, KEY_READ, &appkey);
+
+		// get DisplayName size
+		DWORD dataSize = 0;
+		regquery(appkey, L"DisplayName", NULL, NULL, NULL, &dataSize);
+
+		if (dataSize > 0) {
+			WCHAR* displayName = (WCHAR*)malloc(dataSize);
+			regquery(appkey, L"DisplayName", NULL, NULL, (LPBYTE)displayName, &dataSize);
+			wprintf(L"%ls\n", displayName);
+			free(displayName);
+		}
+
+		index++;
+		subkeyNameSize = 256;
+		RegCloseKey(appkey);
+	}
+	RegCloseKey(key);
+
+	// 32 bit apps
+
+	
+	if (regopen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ, &key) == ERROR_SUCCESS) {
+		printf("[x] Reg Key Opened\n");
+	}
+	else {
+		printf("[-] Error Opening Reg Key\n");
+		return;
+	}
+
+
+	index = 0;
+	subkeyNameSize = 256;
+	while (regenum(key, index, subkeyName, &subkeyNameSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+
+		// open the app's subkey
+		HKEY appkey;
+		regopen(key, subkeyName, 0, KEY_READ, &appkey);
+
+		// get DisplayName size
+		DWORD dataSize = 0;
+		regquery(appkey, L"DisplayName", NULL, NULL, NULL, &dataSize);
+
+		if (dataSize > 0) {
+			WCHAR* displayName = (WCHAR*)malloc(dataSize);
+			regquery(appkey, L"DisplayName", NULL, NULL, (LPBYTE)displayName, &dataSize);
+			wprintf(L"%ls\n", displayName);
+			free(displayName);
+		}
+
+		index++;
+		subkeyNameSize = 256;
+		RegCloseKey(appkey);
+
+	}
+	RegCloseKey(key);
+	//user apps
+
+	if (regopen(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", 0, KEY_READ, &key) == ERROR_SUCCESS) {
+		printf("[x] Reg Key Opened\n");
+	}
+	else {
+		printf("[-] Error Opening Reg Key\n");
+		return;
+	}
+
+	index = 0;
+	subkeyNameSize = 256;
+	while (regenum(key, index, subkeyName, &subkeyNameSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+
+		// open the app's subkey
+		HKEY appkey;
+		regopen(key, subkeyName, 0, KEY_READ, &appkey);
+
+		// get DisplayName size
+		DWORD dataSize = 0;
+		regquery(appkey, L"DisplayName", NULL, NULL, NULL, &dataSize);
+
+		if (dataSize > 0) {
+			WCHAR* displayName = (WCHAR*)malloc(dataSize);
+			regquery(appkey, L"DisplayName", NULL, NULL, (LPBYTE)displayName, &dataSize);
+			wprintf(L"%ls\n", displayName);
+			free(displayName);
+		}
+
+		RegCloseKey(appkey);		
+		index++;
+		subkeyNameSize = 256;
+	}
+	RegCloseKey(key);
 }
