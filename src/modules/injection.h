@@ -1,3 +1,3 @@
 #pragma once
 
-VOID inject_self();
+VOID inject_self(IMPLANT_CONFIG config);
