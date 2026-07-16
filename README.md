@@ -177,7 +177,7 @@ Still present and on the day 29 list: GetModuleHandleW, LoadLibraryW (replacing 
 
 ## Related
 
-- [CVE-POCs](https://github.com/aaron-kidwell/CVE-POCs) — CVE research and proof of concepts
+- [CVE-POCs](https://github.com/aaron-kidwell/CVE-POCs) : CVE research and proof of concepts
 
 ---
 
