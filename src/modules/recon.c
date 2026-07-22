@@ -115,7 +115,6 @@ VOID collect_users_groups_shares() {
 	LPBYTE userinfo = NULL;
 	DWORD userenumcount = 0;
 	DWORD userenumtotal = 0;
-	printf("calling userenum...\n");
 	userenum(NULL, 3, 0, &userinfo, MAX_PREFERRED_LENGTH, &userenumcount, &userenumtotal, NULL);
 	USER_INFO_3* users = (USER_INFO_3*)userinfo;
 	int i;
@@ -128,7 +127,6 @@ VOID collect_users_groups_shares() {
 	LPBYTE grpinfo = NULL;
 	DWORD grpsread = 0;
 	DWORD grpstotal = 0;
-	printf("calling grprenum...\n");
 	grpenum(NULL, 0, &grpinfo, MAX_PREFERRED_LENGTH, &grpsread, &grpstotal, NULL);
 	LOCALGROUP_INFO_0* groups = (LOCALGROUP_INFO_0*)grpinfo;
 
@@ -139,7 +137,6 @@ VOID collect_users_groups_shares() {
 	DWORD usergrpstotal = 0;
 	for (i = 0; i < grpsread; i++) {
 		wprintf(L"Group: %ls\n", (groups + i)->lgrpi0_name);
-		printf("calling usergrpnum...\n");
 		usergrpenum(NULL, (groups + i)->lgrpi0_name, 1, &usergrpinfo,
 			MAX_PREFERRED_LENGTH, &usergrpsread, &usergrpstotal, NULL);
 		if (usergrpinfo != NULL) {
@@ -157,7 +154,6 @@ VOID collect_users_groups_shares() {
 	LPBYTE shareinfo = NULL;
 	DWORD sharesread = 0;
 	DWORD shareinfototal = 0;
-	printf("calling shareenum...\n");
 	shareenum(NULL, 2, &shareinfo, MAX_PREFERRED_LENGTH, &sharesread, &shareinfototal, NULL);
 	SHARE_INFO_2* shares = (SHARE_INFO_2*)shareinfo;
 	i = 0;
