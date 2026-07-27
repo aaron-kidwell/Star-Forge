@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../include/config.h"
+
 VOID inject_self(IMPLANT_CONFIG config);
 VOID remote_inject();
 VOID apc_inject(IMPLANT_CONFIG config);

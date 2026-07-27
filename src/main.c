@@ -17,8 +17,9 @@ int main(VOID)
 	//apc_inject(config);
 	//early_apc_inject(config);
 	//thread_hijack(config);
+	EdrHookerCheck();
 	EtwPatch();
-	getchar();
+	//getchar();
 
 
 	return 0;
