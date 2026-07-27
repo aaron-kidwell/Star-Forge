@@ -3,3 +3,4 @@
 BOOL EtwPatch();
 BOOL EdrHookerCheck();
 BOOL unhook_Ntdll();
+BOOL AmsiPatch();

