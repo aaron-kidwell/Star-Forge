@@ -29,8 +29,8 @@ int main(VOID)
 	//EdrHookerCheck();
 	//EtwPatch();
 	//unhook_Ntdll();
-	AmsiPatch();
-
+	//AmsiPatch();
+	getSSN("test");
 
 
 	return 0;

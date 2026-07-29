@@ -160,3 +160,17 @@ BOOL AmsiPatch() {
 	}
 
 }
+
+VOID getSSN(char* funcName) {
+
+	if (EdrHookerCheck) { printf("test!!\n"); }
+
+
+	// grab ntdll from disk use that to grab ssn from function and return
+
+
+	//DWORD ssn = *(DWORD*)((BYTE*)funcName + 4);
+
+
+
+}
