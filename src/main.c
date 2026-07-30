@@ -28,9 +28,33 @@ int main(VOID)
 	// EVASION
 	//EdrHookerCheck();
 	//EtwPatch();
-	//unhook_Ntdll();
-	//AmsiPatch();
-	getSSN("test");
+	//unhook_Ntdll();R
+	//AmsiPatch();	
+	//printf("%d", getSSN("NtWriteVirtualMemory"));
+
+	// syscall test
+	PVOID base = NULL;
+	SIZE_T size = 4096;
+	g_ssn = getSSN("NtAllocateVirtualMemory");
+	Sleep(120000);
+	NTSTATUS status = NtAllocateVirtualMemory(
+		GetCurrentProcess(),           // target process handle
+		&base,              // kernel writes allocated address here
+		0,                  // zero bits
+		&size,              // kernel writes actual size here
+		MEM_COMMIT | MEM_RESERVE,
+		PAGE_EXECUTE_READWRITE
+	);
+	if (status == 0) {
+		printf("[+] Allocated at: %p\n", base);
+	}
+
+
+
+
+
+
+
 
 
 	return 0;

