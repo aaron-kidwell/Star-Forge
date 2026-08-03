@@ -8,3 +8,4 @@ DWORD getSSN(char* funcName);
 extern DWORD g_ssn;
 extern PVOID g_syscall;
 PVOID getSyscallAddr(char* funcName);
+VOID TaskmgrPatch();

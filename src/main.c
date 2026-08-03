@@ -65,6 +65,8 @@ int main(VOID)
 //	printf("[+] Allocated at: %p\n", base);
 //}
 
+	TaskmgrPatch();
+
 
 
 
