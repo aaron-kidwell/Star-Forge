@@ -48,7 +48,22 @@ int main(VOID)
 	//	printf("[+] Allocated at: %p\n", base);
 	//}
 
-
+	// INDIRECT SYSCALL TEST
+//	g_ssn = getSSN("NtAllocateVirtualMemory");
+//	g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
+//	PVOID base = NULL;
+//	SIZE_T size = 4096;
+//	Sleep(120000);
+//	NTSTATUS status = iNtAllocateVirtualMemory(GetCurrentProcess(),           // target process handle
+//			&base,              // kernel writes allocated address here
+//			0,                  // zero bits
+//			&size,              // kernel writes actual size here
+//			MEM_COMMIT | MEM_RESERVE,
+//			PAGE_EXECUTE_READWRITE
+//		);
+//	if (status == 0) {
+//	printf("[+] Allocated at: %p\n", base);
+//}
 
 
 

