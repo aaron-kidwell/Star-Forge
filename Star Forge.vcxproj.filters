@@ -45,6 +45,9 @@
     <ClCompile Include="src\modules\privesc.c">
       <Filter>Source Files\modules</Filter>
     </ClCompile>
+    <ClCompile Include="wmi_watch.cpp">
+      <Filter>Source Files\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\include\config.h">

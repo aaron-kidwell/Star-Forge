@@ -4,4 +4,5 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="Star Forge.vcxproj" Id="72dcddbd-97a9-49da-8316-f3f9d2bb4b20" />
+  <Project Path="UnlinkMe/UnlinkMe.vcxproj" Id="81bc59b7-8d91-4f87-9d6e-ee98503a6451" />
 </Solution>

@@ -2,8 +2,6 @@
 #include <Windows.h>
 #include "injection.h"
 #include "config.h"
-#include "wbemidl.h"
-#pragma comment(lib, "wbemuuid.lib")
 DWORD g_ssn = 0;
 PVOID g_syscall = NULL;
 
@@ -221,30 +219,4 @@ PVOID getSyscallAddr(char* funcName) {
 		}
 	}
 	return NULL;
-}
-
-VOID TaskmgrPatch() {
-
-	if (FAILED(CoInitializeEx(NULL, COINIT_MULTITHREADED))) { return; }
-	if (FAILED(CoInitializeSecurity(
-		NULL, -1, NULL, NULL,
-		RPC_C_AUTHN_LEVEL_DEFAULT,
-		RPC_C_IMP_LEVEL_IMPERSONATE,
-		NULL, EOAC_NONE, NULL
-	))) {
-		return;
-	}
-
-	IWbemLocator* pLocator = NULL;
-	 if(FAILED(CoCreateInstance(
-		&CLSID_WbemLocator,
-		NULL,
-		CLSCTX_INPROC_SERVER,
-		&IID_IWbemLocator,
-		(LPVOID*)&pLocator
-	))) { return; }
-	
-	 // todo: finish 
-	 //pLocator->lpVtbl->ConnectServer("root\default",NULL,NULL,)
-
 }

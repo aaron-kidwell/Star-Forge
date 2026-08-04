@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{72dcddbd-97a9-49da-8316-f3f9d2bb4b20}</ProjectGuid>
-    <RootNamespace>StarForge</RootNamespace>
+    <ProjectGuid>{81bc59b7-8d91-4f87-9d6e-ee98503a6451}</ProjectGuid>
+    <RootNamespace>UnlinkMe</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -54,7 +54,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -75,14 +74,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;UNLINKME_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -94,14 +95,16 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;UNLINKME_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -111,14 +114,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;UNLINKME_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -130,43 +135,35 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;UNLINKME_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>src\include;src\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\modules\c2.c" />
-    <ClCompile Include="src\modules\evasion.c" />
-    <ClCompile Include="src\modules\injection.c" />
-    <ClCompile Include="src\modules\persist.c" />
-    <ClCompile Include="src\modules\privesc.c" />
-    <ClCompile Include="src\modules\recon.c" />
-    <ClCompile Include="wmi_watch.cpp" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\include\config.h" />
-    <ClInclude Include="src\modules\c2.h" />
-    <ClInclude Include="src\modules\evasion.h" />
-    <ClInclude Include="src\modules\injection.h" />
-    <ClInclude Include="src\modules\persist.h" />
-    <ClInclude Include="src\modules\privesc.h" />
-    <ClInclude Include="src\modules\recon.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="syscalls.asm" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>
