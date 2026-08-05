@@ -220,3 +220,17 @@ PVOID getSyscallAddr(char* funcName) {
 	}
 	return NULL;
 }
+
+BOOL IsElevated() {
+	BOOL elevated = FALSE;
+	HANDLE token = NULL;
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
+		TOKEN_ELEVATION elev;
+		DWORD size = sizeof(TOKEN_ELEVATION);
+		if (GetTokenInformation(token, TokenElevation, &elev, size, &size)) {
+			elevated = elev.TokenIsElevated;
+		}
+		CloseHandle(token);
+	}
+	return elevated;
+}
