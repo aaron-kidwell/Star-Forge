@@ -69,10 +69,10 @@ int main(VOID)
 
 
 
+	printf("start");
 
-
-	//WatchForTaskmgr();
-
+	WatchForTaskmgr();
+	printf("end");
 
 
 

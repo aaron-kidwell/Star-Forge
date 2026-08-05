@@ -71,10 +71,21 @@
     <ClInclude Include="src\modules\privesc.h">
       <Filter>Header Files\modules</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="syscalls.asm">
       <Filter>Source Files</Filter>
     </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Star Forge.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\UnlinkMe.dll" />
   </ItemGroup>
 </Project>
