@@ -159,8 +159,8 @@ extern "C" BOOL WatchForTaskmgr() {
 
     printf("[+] Watching for taskmgr.exe...\n");
 
-    // 8. Keep alive — WMI calls Indicate() when taskmgr starts
-    // In real implant this runs on a background thread
+
+    // In real implant this runs on a background thread, delete later
     Sleep(INFINITE);
 
     // cleanup
