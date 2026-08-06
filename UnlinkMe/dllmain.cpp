@@ -3,6 +3,9 @@
 #include "hook.h"
 HINSTANCE hAppInstance = NULL;
 
+extern "C" {
+    int _fltused = 0;
+}
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
