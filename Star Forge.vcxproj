@@ -154,7 +154,9 @@
     <ClCompile Include="wmi_watch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\include\config.h" />
     <ClInclude Include="src\modules\c2.h" />
     <ClInclude Include="src\modules\evasion.h" />

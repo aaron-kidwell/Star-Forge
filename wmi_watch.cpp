@@ -1,7 +1,8 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <wbemidl.h>
 #include <comdef.h>
-#include "resource.h"
+#include "resource1.h"
 #include "injection.h"
 
 #pragma comment(lib, "wbemuuid.lib")
@@ -52,32 +53,17 @@ public:
 
         }
         
-        // 1. Find the resource
-        HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(IDR_RCDATA1), RT_RCDATA);
-        // 2. Load it into memory
-        HGLOBAL hGlobal = LoadResource(NULL, hRes);
-        // 3. Get pointer to the data
-        PVOID pData = LockResource(hGlobal);
-        // 4. Get the size
-        DWORD size = SizeofResource(NULL, hRes);
-
-        // writing it to disk for now.
-        WCHAR tempPath[MAX_PATH];
-        GetTempPathW(MAX_PATH, tempPath);
-        wcscat_s(tempPath, MAX_PATH, L"protect.dll");
-
-        HANDLE hFile = CreateFileW(tempPath, GENERIC_WRITE, 0, NULL,
-            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile == INVALID_HANDLE_VALUE) return S_OK;
-
-        DWORD written;
-        WriteFile(hFile, pData, size, &written, NULL);
-        CloseHandle(hFile);
-
-        remote_inject(pid, tempPath);
 
 
+        printf("About to call reflective_inject with pid: %lu\n", pid);
+        __try {
+            reflective_inject(pid);
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            printf("Exception in reflective_inject: 0x%08X\n", GetExceptionCode());
+        }
 
+        return S_OK;
     }
 
     HRESULT STDMETHODCALLTYPE SetStatus(

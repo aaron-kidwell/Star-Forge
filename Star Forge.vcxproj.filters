@@ -18,7 +18,7 @@
     <Filter Include="Header Files\modules">
       <UniqueIdentifier>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
+    <Filter Include="Header Files\modules\Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
@@ -71,8 +71,8 @@
     <ClInclude Include="src\modules\privesc.h">
       <Filter>Header Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files\modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -82,7 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Star Forge.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Header Files\modules\Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>

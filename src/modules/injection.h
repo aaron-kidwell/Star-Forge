@@ -15,3 +15,11 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+	VOID reflective_inject(DWORD PID);
+#ifdef __cplusplus
+}
+#endif
